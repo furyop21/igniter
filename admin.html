@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Play Igniter — Admin Dashboard</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0b0b0c; color:#f5f5f7; }
+  header { padding:16px 20px; background:linear-gradient(90deg,#ff003c,#ff8c00); box-shadow:0 2px 12px rgba(0,0,0,.4); }
+  header h1 { margin:0; font-size:1.4rem; letter-spacing:.3px; }
+  main { max-width:1200px; margin:24px auto; padding:0 16px 80px; }
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 18px; }
+  .toolbar input, .toolbar select, .toolbar button { padding:10px 12px; border-radius:8px; border:1px solid #2a2a2d; background:#121215; color:#eee; }
+  .toolbar button { background:#2b59ff; border-color:#2b59ff; cursor:pointer; }
+  .section { margin:28px 0; }
+  .section h2 { margin:0 0 6px; color:#ffcc00; font-size:1.15rem; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+  .card { background:#121215; border:1px solid #222327; border-radius:12px; padding:14px; box-shadow:0 1px 6px rgba(0,0,0,.35); }
+  .card h3 { margin:0 0 6px; color:#00e5ff; font-size:1.05rem; }
+  .muted { color:#aaa; font-size:.9rem; }
+  .btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .btn { padding:8px 10px; border:none; border-radius:8px; font-weight:600; cursor:pointer; }
+  .view { background:#2b59ff; color:#fff; }
+  .approve { background:#28a745; color:#fff; }
+  .reject { background:#ff3b30; color:#fff; }
+  .pause { background:#ffb020; color:#000; }
+  .unpause { background:#28a745; color:#fff; }
+  .delete { background:#ff4444; color:#fff; }
+  .link { background:#3a3a3f; color:#fff; }
+  .thumb { width:100%; max-height:160px; object-fit:cover; border-radius:8px; background:#000; margin:8px 0; }
+  /* details panel */
+  #details { position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; padding:16px; z-index:10; }
+  #details .panel { width:min(940px, 96vw); max-height:90vh; overflow:auto; background:#0f0f12; border:1px solid #26262b; border-radius:14px; padding:18px; }
+  .panel h2 { margin-top:0; }
+  .kv { display:grid; grid-template-columns: 140px 1fr; gap:8px 14px; margin:10px 0; }
+  .kv div { padding:6px 0; border-bottom:1px dashed #222; }
+  .media { display:flex; gap:16px; flex-wrap:wrap; margin:10px 0; }
+  .media img { max-width:260px; max-height:180px; border-radius:10px; border:1px solid #222; background:#000; }
+  .files ul { margin:8px 0 0; padding-left:18px; }
+  .close { float:right; background:#2a2a2d; color:#fff; border:none; border-radius:8px; padding:6px 10px; cursor:pointer; }
+</style>
+</head>
+<body>
+<header><h1>Play Igniter — Admin Dashboard</h1></header>
+<main>
+
+  <!-- SUBMISSIONS -->
+  <section class="section" id="submissionsSection">
+    <h2>📥 Submissions</h2>
+    <div class="toolbar">
+      <input id="subSearch" placeholder="Search submissions by title, studio, code…"/>
+      <select id="subStatus">
+        <option value="all">All statuses</option>
+        <option value="pending" selected>Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+      </select>
+      <button id="subApply">Apply</button>
+    </div>
+    <div id="submissions" class="grid"></div>
+  </section>
+
+  <!-- LIVE GAMES -->
+  <section class="section" id="liveSection">
+    <h2>🎮 Live Games</h2>
+    <div class="toolbar">
+      <input id="liveSearch" placeholder="Search live games by title, studio, code…"/>
+      <button id="liveApply">Apply</button>
+    </div>
+    <div id="liveGames" class="grid"></div>
+  </section>
+
+  <!-- PAUSED GAMES -->
+  <section class="section" id="pausedSection">
+    <h2>⏸️ Paused Games</h2>
+    <div class="toolbar">
+      <input id="pausedSearch" placeholder="Search paused games by title, studio, code…"/>
+      <button id="pausedApply">Apply</button>
+    </div>
+    <div id="pausedGames" class="grid"></div>
+  </section>
+
+</main>
+
+<!-- Details Panel -->
+<div id="details">
+  <div class="panel" id="detailsPanel">
+    <button class="close" id="detailsClose">Close</button>
+    <div id="detailsContent"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, doc, setDoc, deleteDoc, updateDoc, serverTimestamp, getDoc
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+import {
+  getStorage, ref, getDownloadURL, uploadBytes, deleteObject, listAll
+} from "https://www.gstatic.com/firebasejs/10.13.1/firebase-storage.js";
+
+/* ---------- Firebase Config ---------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyAgFcVor28FHPNAuPFbqrJREMZczbNXuEM",
+  authDomain: "play-igniter.firebaseapp.com",
+  projectId: "play-igniter",
+  storageBucket: "play-igniter.firebasestorage.app",
+  messagingSenderId: "536853973922",
+  appId: "1:536853973922:web:0eae7c74c39807d72fc0fb"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+/* ---------- DOM ---------- */
+const subSearch = document.getElementById("subSearch");
+const subStatus = document.getElementById("subStatus");
+const subApply  = document.getElementById("subApply");
+const submissionsEl = document.getElementById("submissions");
+
+const liveSearch = document.getElementById("liveSearch");
+const liveApply  = document.getElementById("liveApply");
+const liveEl     = document.getElementById("liveGames");
+
+const pausedSearch = document.getElementById("pausedSearch");
+const pausedApply  = document.getElementById("pausedApply");
+const pausedEl     = document.getElementById("pausedGames");
+
+const detailsRoot = document.getElementById("details");
+const detailsClose = document.getElementById("detailsClose");
+const detailsContent = document.getElementById("detailsContent");
+detailsClose.onclick = () => { detailsRoot.style.display = "none"; detailsContent.innerHTML = ""; };
+detailsRoot.addEventListener("click", (e) => { if(e.target === detailsRoot){ detailsClose.click(); }});
+
+/* ---------- State ---------- */
+let SUBS = [];     // from "Submission"
+let GAMES = [];    // from "Games" (approved + paused)
+
+/* ---------- Utils ---------- */
+const safe = (v, d="-") => (v ?? d);
+const fmtDate = (ts) => {
+  try {
+    if (!ts) return "-";
+    if (typeof ts.toDate === "function") return ts.toDate().toLocaleString();
+    const d = new Date(ts); return isNaN(d) ? "-" : d.toLocaleString();
+  } catch { return "-"; }
+};
+const getNameFromPath = (path) => (path ? path.split("/").pop() : null);
+
+async function copyPathTo(pathFrom, pathTo){
+  if(!pathFrom || !pathTo) return { url:null, path:null };
+  const fromRef = ref(storage, pathFrom);
+  const toRef   = ref(storage, pathTo);
+  const url     = await getDownloadURL(fromRef);
+  const blob    = await (await fetch(url)).blob();
+  await uploadBytes(toRef, blob);
+  const newURL  = await getDownloadURL(toRef);
+  return { url: newURL, path: toRef.fullPath };
+}
+
+async function safeDelete(path){
+  if(!path) return;
+  try { await deleteObject(ref(storage, path)); } catch(_){}
+}
+
+/* ---------- Loaders ---------- */
+async function loadSubmissions(){
+  const snap = await getDocs(collection(db, "Submission"));
+  SUBS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderSubmissions();
+}
+
+async function loadGames(){
+  const snap = await getDocs(collection(db, "Games"));
+  GAMES = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  renderLive();
+  renderPaused();
+}
+
+/* ---------- Renderers ---------- */
+function renderSubmissions(){
+  const q = (subSearch.value || "").toLowerCase();
+  const s = subStatus.value;
+  const list = SUBS.filter(x => {
+    const matchText = (x.title||"").toLowerCase().includes(q) ||
+                      (x.studio||x.studioName||"").toLowerCase().includes(q) ||
+                      (x.submissionID||x.id||"").toLowerCase().includes(q);
+    const matchStatus = (s==="all") ? true : ((x.status || "pending") === s);
+    return matchText && matchStatus;
+  });
+
+  submissionsEl.innerHTML = list.length ? "" : `<div class="muted">No submissions found.</div>`;
+  for(const sub of list){
+    const thumb = sub.thumbnailURL ? `<img class="thumb" src="${sub.thumbnailURL}" alt="thumb">` : "";
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML = `
+      <h3>${safe(sub.title,"(untitled)")} <span class="muted">· ${safe(sub.studio||sub.studioName)}</span></h3>
+      ${thumb}
+      <div class="muted">Code: ${safe(sub.submissionID||sub.id)}</div>
+      <div class="muted">Status: ${safe(sub.status,"pending")} · Submitted: ${fmtDate(sub.submittedAt||sub.createdAt)}</div>
+      <div class="btns">
+        <button class="btn view">View Details</button>
+        ${ (sub.status||"pending")==="pending" ? `<button class="btn approve">Approve</button><button class="btn reject">Reject</button>` : ``}
+      </div>
+    `;
+    el.querySelector(".view").onclick = () => openSubmissionDetails(sub);
+    if (el.querySelector(".approve")) el.querySelector(".approve").onclick = () => approveSubmission(sub);
+    if (el.querySelector(".reject"))  el.querySelector(".reject").onclick  = () => rejectSubmission(sub);
+    submissionsEl.appendChild(el);
+  }
+}
+
+function renderLive(){
+  const q = (liveSearch.value || "").toLowerCase();
+  const list = GAMES.filter(g => (g.status||"approved")==="approved").filter(g => {
+    return (g.title||"").toLowerCase().includes(q) ||
+           (g.studio||g.studioName||"").toLowerCase().includes(q) ||
+           (g.submissionID||g.id||"").toLowerCase().includes(q);
+  });
+
+  liveEl.innerHTML = list.length ? "" : `<div class="muted">No live games.</div>`;
+  for(const g of list){
+    const thumb = g.thumbnailURL ? `<img class="thumb" src="${g.thumbnailURL}" alt="thumb">` : "";
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML = `
+      <h3>${safe(g.title)} <span class="muted">· ${safe(g.studio||g.studioName)}</span></h3>
+      ${thumb}
+      <div class="muted">Code: ${safe(g.submissionID||g.id)}</div>
+      <div class="muted">Views: ${safe(g.views,0)} · Downloads: ${safe(g.downloads,0)}</div>
+      <div class="muted">Approved: ${fmtDate(g.approvedAt||g.createdAt)}</div>
+      <div class="btns">
+        ${g.fileURL ? `<a class="btn link" href="${g.fileURL}" target="_blank">Open File</a>` : ``}
+        <button class="btn view">View Details</button>
+        <button class="btn pause">Pause</button>
+        <button class="btn delete">Delete</button>
+      </div>
+    `;
+    el.querySelector(".view").onclick = () => openGameDetails(g);
+    el.querySelector(".pause").onclick = () => pauseGame(g);
+    el.querySelector(".delete").onclick = () => deleteGame(g);
+    liveEl.appendChild(el);
+  }
+}
+
+function renderPaused(){
+  const q = (pausedSearch.value || "").toLowerCase();
+  const list = GAMES.filter(g => (g.status||"approved")==="paused").filter(g => {
+    return (g.title||"").toLowerCase().includes(q) ||
+           (g.studio||g.studioName||"").toLowerCase().includes(q) ||
+           (g.submissionID||g.id||"").toLowerCase().includes(q);
+  });
+
+  pausedEl.innerHTML = list.length ? "" : `<div class="muted">No paused games.</div>`;
+  for(const g of list){
+    const thumb = g.thumbnailURL ? `<img class="thumb" src="${g.thumbnailURL}" alt="thumb">` : "";
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML = `
+      <h3>${safe(g.title)} <span class="muted">· ${safe(g.studio||g.studioName)}</span></h3>
+      ${thumb}
+      <div class="muted">Code: ${safe(g.submissionID||g.id)}</div>
+      <div class="muted">Views: ${safe(g.views,0)} · Downloads: ${safe(g.downloads,0)}</div>
+      <div class="muted">Paused: ${fmtDate(g.pausedAt)}</div>
+      <div class="btns">
+        ${g.fileURL ? `<a class="btn link" href="${g.fileURL}" target="_blank">Open File</a>` : ``}
+        <button class="btn view">View Details</button>
+        <button class="btn unpause">Unpause</button>
+        <button class="btn delete">Delete</button>
+      </div>
+    `;
+    el.querySelector(".view").onclick = () => openGameDetails(g);
+    el.querySelector(".unpause").onclick = () => unpauseGame(g);
+    el.querySelector(".delete").onclick = () => deleteGame(g);
+    pausedEl.appendChild(el);
+  }
+}
+
+/* ---------- Details Panels ---------- */
+function openSubmissionDetails(sub){
+  const files = [
+    sub.fileURL ? {label:"Game File", url:sub.fileURL, name:getNameFromPath(sub.filePath)||sub.fileName} : null,
+    sub.thumbnailURL ? {label:"Thumbnail", url:sub.thumbnailURL, name:getNameFromPath(sub.thumbnailPath)} : null,
+    sub.coverURL ? {label:"Cover", url:sub.coverURL, name:getNameFromPath(sub.coverPath)} : null,
+  ].filter(Boolean);
+
+  detailsContent.innerHTML = `
+    <h2>Submission Details</h2>
+    <div class="kv">
+      <div><b>Title</b></div><div>${safe(sub.title)}</div>
+      <div><b>Studio</b></div><div>${safe(sub.studio||sub.studioName)}</div>
+      <div><b>Email</b></div><div>${safe(sub.email)}</div>
+      <div><b>Type</b></div><div>${safe(sub.type)}</div>
+      <div><b>Platform</b></div><div>${safe(sub.platform)}</div>
+      <div><b>Genre</b></div><div>${safe(sub.genre)}</div>
+      <div><b>Code</b></div><div>${safe(sub.submissionID||sub.id)}</div>
+      <div><b>Status</b></div><div>${safe(sub.status,"pending")}</div>
+      <div><b>Submitted</b></div><div>${fmtDate(sub.submittedAt||sub.createdAt)}</div>
+    </div>
+    <div class="media">
+      ${sub.thumbnailURL ? `<div><div class="muted">Thumbnail</div><img src="${sub.thumbnailURL}"></div>` : ``}
+      ${sub.coverURL ? `<div><div class="muted">Cover</div><img src="${sub.coverURL}"></div>` : ``}
+    </div>
+    <div><b>Description</b><div class="muted" style="white-space:pre-wrap;margin-top:6px;">${safe(sub.description,"—")}</div></div>
+    <div class="files">
+      <b>Files</b>
+      <ul>
+        ${files.map(f => `<li>${f.label}: <a href="${f.url}" target="_blank">${f.name||f.url}</a></li>`).join("") || "<li class='muted'>No files</li>"}
+      </ul>
+    </div>
+    <div class="btns" style="margin-top:12px;">
+      ${(sub.status||"pending")==="pending" ? `<button class="btn approve">Approve</button><button class="btn reject">Reject</button>` : ``}
+    </div>
+  `;
+  const ap = detailsContent.querySelector(".approve");
+  const rj = detailsContent.querySelector(".reject");
+  if(ap) ap.onclick = () => approveSubmission(sub, true);
+  if(rj) rj.onclick = () => rejectSubmission(sub, true);
+  detailsRoot.style.display = "flex";
+}
+
+function openGameDetails(g){
+  const files = [
+    g.fileURL ? {label:"Game File", url:g.fileURL, name:getNameFromPath(g.filePath)||g.fileName} : null,
+    g.thumbnailURL ? {label:"Thumbnail", url:g.thumbnailURL, name:getNameFromPath(g.thumbnailPath)} : null,
+    g.coverURL ? {label:"Cover", url:g.coverURL, name:getNameFromPath(g.coverPath)} : null,
+  ].filter(Boolean);
+
+  detailsContent.innerHTML = `
+    <h2>Game Details</h2>
+    <div class="kv">
+      <div><b>Title</b></div><div>${safe(g.title)}</div>
+      <div><b>Studio</b></div><div>${safe(g.studio||g.studioName)}</div>
+      <div><b>Email</b></div><div>${safe(g.email)}</div>
+      <div><b>Type</b></div><div>${safe(g.type)}</div>
+      <div><b>Platform</b></div><div>${safe(g.platform)}</div>
+      <div><b>Genre</b></div><div>${safe(g.genre)}</div>
+      <div><b>Code</b></div><div>${safe(g.submissionID||g.id)}</div>
+      <div><b>Status</b></div><div>${safe(g.status,"approved")}</div>
+      <div><b>Views</b></div><div>${safe(g.views,0)}</div>
+      <div><b>Downloads</b></div><div>${safe(g.downloads,0)}</div>
+      <div><b>Created</b></div><div>${fmtDate(g.createdAt)}</div>
+      <div><b>Approved</b></div><div>${fmtDate(g.approvedAt)}</div>
+      <div><b>Paused</b></div><div>${fmtDate(g.pausedAt)}</div>
+    </div>
+    <div class="media">
+      ${g.thumbnailURL ? `<div><div class="muted">Thumbnail</div><img src="${g.thumbnailURL}"></div>` : ``}
+      ${g.coverURL ? `<div><div class="muted">Cover</div><img src="${g.coverURL}"></div>` : ``}
+    </div>
+    <div><b>Description</b><div class="muted" style="white-space:pre-wrap;margin-top:6px;">${safe(g.description,"—")}</div></div>
+    <div class="files">
+      <b>Files</b>
+      <ul>
+        ${files.map(f => `<li>${f.label}: <a href="${f.url}" target="_blank">${f.name||f.url}</a></li>`).join("") || "<li class='muted'>No files</li>"}
+      </ul>
+    </div>
+    <div class="btns" style="margin-top:12px;">
+      ${(g.status||"approved")==="approved" ? `<button class="btn pause">Pause</button>` : `<button class="btn unpause">Unpause</button>`}
+      <button class="btn delete">Delete</button>
+    </div>
+  `;
+  const pauseBtn = detailsContent.querySelector(".pause");
+  const unpauseBtn = detailsContent.querySelector(".unpause");
+  const delBtn = detailsContent.querySelector(".delete");
+  if(pauseBtn) pauseBtn.onclick = () => pauseGame(g, true);
+  if(unpauseBtn) unpauseBtn.onclick = () => unpauseGame(g, true);
+  if(delBtn) delBtn.onclick = () => deleteGame(g, true);
+  detailsRoot.style.display = "flex";
+}
+
+/* ---------- Actions: Submissions ---------- */
+async function approveSubmission(sub, closeAfter=false){
+  try{
+    const id = sub.submissionID || sub.id;
+    // Build new target paths under Games/{id}/...
+    const newGamePath = sub.filePath ? `Games/${id}/game/${getNameFromPath(sub.filePath)}` : null;
+    const newThumbPath = sub.thumbnailPath ? `Games/${id}/thumbnail/${getNameFromPath(sub.thumbnailPath)}` : null;
+    const newCoverPath = sub.coverPath ? `Games/${id}/cover/${getNameFromPath(sub.coverPath)}` : null;
+
+    // Copy each asset to Games and capture new URLs/paths
+    const gameAsset  = sub.filePath ? await copyPathTo(sub.filePath, newGamePath) : {url:null,path:null};
+    const thumbAsset = sub.thumbnailPath ? await copyPathTo(sub.thumbnailPath, newThumbPath) : {url:null,path:null};
+    const coverAsset = sub.coverPath ? await copyPathTo(sub.coverPath, newCoverPath) : {url:null,path:null};
+
+    // Create/overwrite Games doc with same id for easy routing
+    const gameDoc = {
+      ...sub,
+      status: "approved",
+      approvedAt: serverTimestamp(),
+      // point to new storage
+      fileURL: gameAsset.url, filePath: gameAsset.path,
+      thumbnailURL: thumbAsset.url, thumbnailPath: thumbAsset.path,
+      coverURL: coverAsset.url, coverPath: coverAsset.path,
+      views: sub.views ?? 0,
+      downloads: sub.downloads ?? 0,
+      createdAt: sub.createdAt || sub.submittedAt || serverTimestamp()
+    };
+    await setDoc(doc(db, "Games", id), gameDoc);
+
+    // Cleanup old submission storage + doc
+    await safeDelete(sub.filePath);
+    await safeDelete(sub.thumbnailPath);
+    await safeDelete(sub.coverPath);
+    await deleteDoc(doc(db, "Submission", sub.id || id));
+
+    // Refresh
+    await loadSubmissions();
+    await loadGames();
+    if(closeAfter) detailsClose.click();
+    alert("✅ Approved: moved to Games.");
+  }catch(err){
+    console.error(err); alert("Approve failed: " + err.message);
+  }
+}
+
+async function rejectSubmission(sub, closeAfter=false){
+  try{
+    const id = sub.id || sub.submissionID;
+    await updateDoc(doc(db, "Submission", id), {
+      status: "rejected",
+      reviewedAt: serverTimestamp()
+    });
+    await loadSubmissions();
+    if(closeAfter) detailsClose.click();
+    alert("❎ Submission marked as rejected.");
+  }catch(err){
+    console.error(err); alert("Reject failed: " + err.message);
+  }
+}
+
+/* ---------- Actions: Games (Pause / Unpause / Delete) ---------- */
+async function pauseGame(g, closeAfter=false){
+  try{
+    if ((g.status||"approved")==="paused") return;
+    const id = g.submissionID || g.id;
+
+    // target paths under Paused/{id}/...
+    const newGamePath = g.filePath ? `Paused/${id}/game/${getNameFromPath(g.filePath)}` : null;
+    const newThumbPath = g.thumbnailPath ? `Paused/${id}/thumbnail/${getNameFromPath(g.thumbnailPath)}` : null;
+    const newCoverPath = g.coverPath ? `Paused/${id}/cover/${getNameFromPath(g.coverPath)}` : null;
+
+    // copy to Paused
+    const gameAsset  = g.filePath ? await copyPathTo(g.filePath, newGamePath) : {url:null,path:null};
+    const thumbAsset = g.thumbnailPath ? await copyPathTo(g.thumbnailPath, newThumbPath) : {url:null,path:null};
+    const coverAsset = g.coverPath ? await copyPathTo(g.coverPath, newCoverPath) : {url:null,path:null};
+
+    // delete old Games assets
+    await safeDelete(g.filePath);
+    await safeDelete(g.thumbnailPath);
+    await safeDelete(g.coverPath);
+
+    // update doc with paused status + new paths
+    await updateDoc(doc(db, "Games", id), {
+      status: "paused",
+      pausedAt: serverTimestamp(),
+      fileURL: gameAsset.url, filePath: gameAsset.path,
+      thumbnailURL: thumbAsset.url, thumbnailPath: thumbAsset.path,
+      coverURL: coverAsset.url, coverPath: coverAsset.path
+    });
+
+    await loadGames();
+    if(closeAfter) detailsClose.click();
+    alert("⏸️ Game paused and moved to /Paused.");
+  }catch(err){
+    console.error(err); alert("Pause failed: " + err.message);
+  }
+}
+
+async function unpauseGame(g, closeAfter=false){
+  try{
+    if ((g.status||"approved")!=="paused") return;
+    const id = g.submissionID || g.id;
+
+    // target back to Games/{id}/...
+    const newGamePath = g.filePath ? `Games/${id}/game/${getNameFromPath(g.filePath)}` : null;
+    const newThumbPath = g.thumbnailPath ? `Games/${id}/thumbnail/${getNameFromPath(g.thumbnailPath)}` : null;
+    const newCoverPath = g.coverPath ? `Games/${id}/cover/${getNameFromPath(g.coverPath)}` : null;
+
+    // copy to Games
+    const gameAsset  = g.filePath ? await copyPathTo(g.filePath, newGamePath) : {url:null,path:null};
+    const thumbAsset = g.thumbnailPath ? await copyPathTo(g.thumbnailPath, newThumbPath) : {url:null,path:null};
+    const coverAsset = g.coverPath ? await copyPathTo(g.coverPath, newCoverPath) : {url:null,path:null};
+
+    // delete old Paused assets
+    await safeDelete(g.filePath);
+    await safeDelete(g.thumbnailPath);
+    await safeDelete(g.coverPath);
+
+    // update doc with approved status + new paths
+    await updateDoc(doc(db, "Games", id), {
+      status: "approved",
+      approvedAt: serverTimestamp(),
+      fileURL: gameAsset.url, filePath: gameAsset.path,
+      thumbnailURL: thumbAsset.url, thumbnailPath: thumbAsset.path,
+      coverURL: coverAsset.url, coverPath: coverAsset.path
+    });
+
+    await loadGames();
+    if(closeAfter) detailsClose.click();
+    alert("✅ Game unpaused and moved back to /Games.");
+  }catch(err){
+    console.error(err); alert("Unpause failed: " + err.message);
+  }
+}
+
+async function deleteGame(g, closeAfter=false){
+  try{
+    const id = g.submissionID || g.id;
+    await safeDelete(g.filePath);
+    await safeDelete(g.thumbnailPath);
+    await safeDelete(g.coverPath);
+    await deleteDoc(doc(db, "Games", id));
+    await loadGames();
+    if(closeAfter) detailsClose.click();
+    alert("🗑️ Game removed from Firestore and Storage.");
+  }catch(err){
+    console.error(err); alert("Delete failed: " + err.message);
+  }
+}
+
+/* ---------- Events ---------- */
+subApply.onclick = renderSubmissions;
+liveApply.onclick = renderLive;
+pausedApply.onclick = renderPaused;
+
+/* ---------- Initial Load ---------- */
+await loadSubmissions();
+await loadGames();
+
+</script>
+</body>
+</html>

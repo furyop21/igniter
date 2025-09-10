@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Submit Game - Play Igniter</title>
+  <link rel="stylesheet" href="submitstyle.css">
+  <style>
+    :root {
+      --neon2: #00e6e6;
+      --muted: #aaa;
+    }
+
+    /* Ensure footer sticks */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    main {
+      flex: 1;
+    }
+    footer {
+      background: #111;
+      color: #ccc;
+      text-align: center;
+      padding: 10px;
+      font-size: 0.9rem;
+    }
+
+    .hidden { display:none; }
+    .flex-row { display:flex; gap:16px; align-items:flex-end; }
+    .small { flex:1; }
+    .btn-submit { 
+      margin-top:16px; 
+      padding:10px 20px; 
+      border:none; 
+      border-radius:8px; 
+      background:var(--neon2, #00e6e6); 
+      color:white; 
+      font-weight:bold; 
+      cursor:pointer; 
+    }
+    .btn-submit:disabled { background:#888; cursor:not-allowed; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div>
+        <h1>Play Igniter</h1>
+        <div style="font-size:12px;color:var(--muted)">Discover Unique Indie Games</div>
+      </div>
+    </div>
+
+    <nav>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="games.html" class="active">Games</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="fordevelopers.html">For Developers</a></li>
+        <li id="logoutNav" class="hidden"><a href="#" id="logoutBtn">Logout</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div id="checking">Checking authentication…</div>
+
+  <main class="container" id="mainContent" aria-live="polite" style="display:none;">
+    <h2>Submit Your Game</h2>
+
+    <form id="gameForm" autocomplete="off">
+      <label for="studio">Studio Name</label>
+      <input id="studio" type="text" placeholder="Studio Name">
+
+      <label>Developers *</label>
+      <div id="devList">
+        <input type="text" name="developer" class="developer-input" placeholder="Developer Name">
+      </div>
+      <div style="margin-top:8px">
+        <button type="button" id="addDevBtn" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:var(--neon2);cursor:pointer">+ Add Another Developer</button>
+      </div>
+
+      <label for="game-title">Game Title *</label>
+      <input id="game-title" type="text" placeholder="Game Title">
+
+      <label for="game-type">Game Type *</label>
+      <select id="game-type">
+        <option value="">Select Type</option>
+        <option value="web">Web (Browser)</option>
+        <option value="download">Download</option>
+      </select>
+
+      <!-- Web options -->
+      <div id="web-options" class="hidden">
+        <div class="flex-row">
+          <div style="flex:1">
+            <label for="web-device">Device *</label>
+            <select id="web-device">
+              <option value="">Select device</option>
+              <option value="computer">Computer</option>
+              <option value="mobile">Mobile</option>
+              <option value="both">Both</option>
+            </select>
+          </div>
+          <div class="small">
+            <label for="webFile">Upload Game File (ZIP) *</label>
+            <input id="webFile" type="file" accept=".zip,.html,.htm">
+          </div>
+        </div>
+      </div>
+
+      <!-- Download options -->
+      <div id="download-options" class="hidden">
+        <label for="download-platform">Platform *</label>
+        <select id="download-platform">
+          <option value="">Select Platform</option>
+          <option value="windows">Windows</option>
+          <option value="android">Android</option>
+          <option value="both">Both</option>
+          <option value="zip">Universal ZIP</option>
+        </select>
+
+        <div id="windows-upload" class="hidden">
+          <label for="exeFile">Windows Game File (.exe) *</label>
+          <input id="exeFile" type="file" accept=".exe">
+        </div>
+
+        <div id="android-upload" class="hidden">
+          <label for="apkFile">Android Game File (.apk) *</label>
+          <input id="apkFile" type="file" accept=".apk">
+        </div>
+
+        <div id="zip-upload" class="hidden">
+          <label for="zipFile">Game Archive (.zip) *</label>
+          <input id="zipFile" type="file" accept=".zip">
+        </div>
+      </div>
+
+      <label for="genre">Genre *</label>
+      <input id="genre" type="text" placeholder="e.g. Platformer, Puzzle">
+
+      <label for="description">Description *</label>
+      <textarea id="description" rows="6" placeholder="Short description of the game"></textarea>
+
+      <label for="screenshots">Screenshots * (you can select multiple)</label>
+      <input id="screenshots" type="file" accept="image/*" multiple>
+
+      <label for="cover">Cover Image *</label>
+      <input id="cover" type="file" accept="image/*">
+
+      <!-- Optional store links -->
+      <div style="margin-top:16px;border-top:1px solid #222;padding-top:12px;">
+        <div style="font-weight:600; margin-bottom:8px;">Optional Store Links</div>
+
+        <label for="playStore">Google Play (optional)</label>
+        <input id="playStore" type="url" placeholder="https://play.google.com/store/apps/details?id=...">
+
+        <label for="appStore">Apple App Store (optional)</label>
+        <input id="appStore" type="url" placeholder="https://apps.apple.com/app/id...">
+
+        <label for="itchUrl">itch.io (optional)</label>
+        <input id="itchUrl" type="url" placeholder="https://yourname.itch.io/your-game">
+
+        <label for="steamUrl">Steam (optional)</label>
+        <input id="steamUrl" type="url" placeholder="https://store.steampowered.com/app/...">
+      </div>
+
+      <button type="submit" class="btn-submit">Submit Game</button>
+    </form>
+  </main>
+
+  <footer>
+    <p>© 2025 Play Igniter. All Rights Reserved.</p>
+    <a href="Terms of use.txt" style="color: #ff8c00; text-decoration: none; margin: 0 10px;">Terms of Use</a> |
+    <a href="Play Igniter   User Privacy Policy.txt" style="color: #ff8c00; text-decoration: none; margin: 0 10px;">Privacy Policy</a> |
+    <a href="Play_Igniter_Game_Submission_Terms.txt" style="color: #ff8c00; text-decoration: none; margin: 0 10px;">Game Submission Terms</a> |
+    <a href="Play_Igniter_Privacy_Policy.txt" style="color: #ff8c00; text-decoration: none; margin: 0 10px;">Game Submission Privacy</a>
+  </footer>
+
+  <!-- Firebase + logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgFcVor28FHPNAuPFbqrJREMZczbNXuEM",
+      authDomain: "play-igniter.firebaseapp.com",
+      projectId: "play-igniter",
+      storageBucket: "play-igniter.firebasestorage.app", 
+      messagingSenderId: "536853973922",
+      appId: "1:536853973922:web:0eae7c74c39807d72fc0fb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+
+    const checking = document.getElementById('checking');
+    const mainContent = document.getElementById('mainContent');
+    const logoutNav = document.getElementById('logoutNav');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    const gameTypeSelect = document.getElementById("game-type");
+    const webOptions = document.getElementById("web-options");
+    const downloadOptions = document.getElementById("download-options");
+    const downloadPlatform = document.getElementById("download-platform");
+    const winUpload = document.getElementById("windows-upload");
+    const androidUpload = document.getElementById("android-upload");
+    const zipUpload = document.getElementById("zip-upload");
+
+    // Add Developer button
+    const devList = document.getElementById("devList");
+    document.getElementById("addDevBtn").addEventListener("click", () => {
+      const newInput = document.createElement("input");
+      newInput.type = "text";
+      newInput.name = "developer";
+      newInput.classList.add("developer-input");
+      newInput.placeholder = "Developer Name";
+      newInput.style.marginTop = "8px";
+      devList.appendChild(newInput);
+    });
+
+    // Show/hide panels
+    function updatePanels(){
+      if (gameTypeSelect.value === "web"){
+        webOptions.classList.remove("hidden");
+        downloadOptions.classList.add("hidden");
+      } else if (gameTypeSelect.value === "download"){
+        downloadOptions.classList.remove("hidden");
+        webOptions.classList.add("hidden");
+      } else {
+        webOptions.classList.add("hidden");
+        downloadOptions.classList.add("hidden");
+      }
+      updatePlatformPanels();
+    }
+    function updatePlatformPanels(){
+      const val = downloadPlatform.value;
+      winUpload.classList.add("hidden");
+      androidUpload.classList.add("hidden");
+      zipUpload.classList.add("hidden");
+
+      if (val === "windows"){ winUpload.classList.remove("hidden"); }
+      else if (val === "android"){ androidUpload.classList.remove("hidden"); }
+      else if (val === "both"){ winUpload.classList.remove("hidden"); androidUpload.classList.remove("hidden"); }
+      else if (val === "zip"){ zipUpload.classList.remove("hidden"); }
+    }
+    gameTypeSelect.addEventListener("change", updatePanels);
+    downloadPlatform.addEventListener("change", updatePlatformPanels);
+
+    // Auth state
+    onAuthStateChanged(auth, (user) => {
+      checking.style.display = 'none';
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+      mainContent.style.display = '';
+      logoutNav.classList.remove('hidden');
+      logoutBtn.title = `Logout (${user.email || 'account'})`;
+    });
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await signOut(auth);
+        window.location.href = "login.html";
+      } catch (err) {
+        console.error("Sign out failed:", err);
+        alert("Unable to sign out.");
+      }
+    });
+
+    // Form submission
+    const form = document.getElementById("gameForm");
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+
+      const currentUser = auth.currentUser;
+      if (!currentUser){ window.location.href="login.html"; return; }
+
+      const studio = document.getElementById("studio").value.trim();
+      const developers = Array.from(document.querySelectorAll(".developer-input")).map(i=>i.value.trim()).filter(v=>v);
+      const title = document.getElementById("game-title").value.trim();
+      const type = document.getElementById("game-type").value;
+      const genre = document.getElementById("genre").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const screenshotsInput = document.getElementById("screenshots");
+      const coverInput = document.getElementById("cover");
+
+      // Optional store links
+      const playStore = document.getElementById("playStore") ? document.getElementById("playStore").value.trim() : "";
+      const appStore  = document.getElementById("appStore")  ? document.getElementById("appStore").value.trim()  : "";
+      const itchUrl   = document.getElementById("itchUrl")   ? document.getElementById("itchUrl").value.trim()   : "";
+      const steamUrl  = document.getElementById("steamUrl")  ? document.getElementById("steamUrl").value.trim()  : "";
+
+      // ---- VALIDATION ----
+      if (!developers.length){ alert("At least one developer name is required."); return; }
+      if (!title || !type || !genre || !description){ alert("Fill all required fields."); return; }
+      if (!screenshotsInput.files.length){ alert("Screenshots required."); return; }
+      if (!coverInput.files.length){ alert("Cover image required."); return; }
+
+      // Use a unique submission ID
+      const submissionID = Date.now().toString();
+
+      const submitBtn = form.querySelector('.btn-submit');
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Uploading…";
+
+      try {
+        // -----------------------------
+        // IMPORTANT: create the Firestore doc FIRST
+        // so your security rules that call isOwner(submissionId) will succeed
+        // -----------------------------
+        await setDoc(doc(db, "Submission", submissionID), {
+          userId: currentUser.uid,
+          email: currentUser.email,
+          createdAt: serverTimestamp(),
+          status: "uploading"
+        });
+
+        // Now perform the file uploads into games/{submissionID}/...
+        let fileData = {};
+
+        if (type === "web"){
+          const device = document.getElementById("web-device").value;
+          if (!device){ alert("Select a device."); throw new Error("Missing device"); }
+
+          const webFile = document.getElementById("webFile").files[0];
+          if (!webFile){ alert("Upload a web game file."); throw new Error("Missing web file"); }
+
+          const fileRef = ref(storage, `games/${submissionID}/${webFile.name}`);
+          await uploadBytes(fileRef, webFile);
+          fileData = { type:"web", device, fileURL: await getDownloadURL(fileRef) };
+
+        } else if (type === "download"){
+          const platform = document.getElementById("download-platform").value;
+          if (!platform){ alert("Select a platform."); throw new Error("Missing platform"); }
+          fileData.type="download"; fileData.platform=platform;
+
+          if (platform==="windows"||platform==="both"){
+            const exeFile=document.getElementById("exeFile").files[0];
+            if (!exeFile){ alert("Missing .exe file"); throw new Error("Missing exe"); }
+            const exeRef=ref(storage,`games/${submissionID}/${exeFile.name}`);
+            await uploadBytes(exeRef,exeFile);
+            fileData.exeURL=await getDownloadURL(exeRef);
+          }
+          if (platform==="android"||platform==="both"){
+            const apkFile=document.getElementById("apkFile").files[0];
+            if (!apkFile){ alert("Missing .apk file"); throw new Error("Missing apk"); }
+            const apkRef=ref(storage,`games/${submissionID}/${apkFile.name}`);
+            await uploadBytes(apkRef,apkFile);
+            fileData.apkURL=await getDownloadURL(apkRef);
+          }
+          if (platform==="zip"){
+            const zipFile=document.getElementById("zipFile").files[0];
+            if (!zipFile){ alert("Missing .zip file"); throw new Error("Missing zip"); }
+            const zipRef=ref(storage,`games/${submissionID}/${zipFile.name}`);
+            await uploadBytes(zipRef,zipFile);
+            fileData.zipURL=await getDownloadURL(zipRef);
+          }
+        }
+
+        // Upload screenshots
+        const screenshotURLs=[];
+        for (let i=0;i<screenshotsInput.files.length;i++){
+          const s=screenshotsInput.files[i];
+          const safeName = `${i}_${s.name}`;
+          const sRef=ref(storage,`games/${submissionID}/screenshots/${safeName}`);
+          await uploadBytes(sRef,s);
+          screenshotURLs.push(await getDownloadURL(sRef));
+        }
+
+        // Upload cover
+        const cover=coverInput.files[0];
+        const coverRef=ref(storage,`games/${submissionID}/${cover.name}`);
+        await uploadBytes(coverRef,cover);
+        const coverURL=await getDownloadURL(coverRef);
+
+        // Build external links object only with provided fields
+        const externalLinks = {};
+        if (playStore) externalLinks.playStore = playStore;
+        if (appStore)  externalLinks.appStore  = appStore;
+        if (itchUrl)   externalLinks.itch      = itchUrl;
+        if (steamUrl)  externalLinks.steam     = steamUrl;
+
+        // Finally write full metadata into the Submissions doc (merge with initial)
+        await setDoc(doc(db,"Submission",submissionID),{
+          submissionID,
+          userId: currentUser.uid,
+          email: currentUser.email,
+          studio,
+          developers,
+          title,
+          type,
+          genre,
+          description,
+          coverURL,
+          screenshotURLs,
+          fileData,
+          externalLinks,
+          views:0,
+          downloads:0,
+          status:"pending",
+          submittedAt: serverTimestamp()
+        }, { merge: true });
+
+        alert("Game submitted!");
+        form.reset();
+        updatePanels(); // hide upload panels after reset
+      } catch(err){
+        console.error("Submit failed:",err);
+        alert("Submission failed. See console.");
+      } finally {
+        submitBtn.disabled=false;
+        submitBtn.textContent="Submit Game";
+      }
+    });
+  </script>
+</body>
+</html>

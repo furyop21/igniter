@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Play Igniter - Developers Hub</title>
+  <link rel="stylesheet" href="fordevelopersstyle.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <h1>Play Igniter</h1>
+    <p>Welcome Developers! Access your dashboard or submit your games</p>
+  </header>
+
+  <!-- Navigation -->
+  <nav>
+    <ul>
+      <li><a href="Index.html">Home</a></li>
+      <li><a href="games.html">Games</a></li>
+      <li><a href="about.html" class="active">About</a></li>
+      <li><a href="contact.html" class="active">Contact Us</a></li>
+      <li><a href="fordevelopers.html">For Developers</a></li>
+      <li><button id="authBtn" class="auth-btn">Login/Register</button></li>
+    </ul>
+  </nav>
+
+  <!-- Developer Hub Section -->
+  <section class="hub-section">
+    <p id="userStatus">Checking login...</p>
+    <h2>Why Join Play Igniter?</h2>
+    <p>
+      - Showcase your indie games to a global audience.<br>
+      - Track your game submissions, views, and feedback.<br>
+      - Manage multiple versions and updates easily.<br>
+      - Get your own developer profile like professional platforms.
+    </p>
+
+    <div class="hub-buttons">
+      <button id="submitBtn">Submit Game</button>
+      <button id="dashboardBtn">Go to Dashboard</button>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 Play Igniter. All Rights Reserved.</p>
+  </footer>
+
+  <!-- Firebase Scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgFcVor28FHPNAuPFbqrJREMZczbNXuEM",
+      authDomain: "play-igniter.firebaseapp.com",
+      projectId: "play-igniter",
+      storageBucket: "play-igniter.firebasestorage.app",
+      messagingSenderId: "536853973922",
+      appId: "1:536853973922:web:0eae7c74c39807d72fc0fb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const userStatus = document.getElementById("userStatus");
+    const submitBtn = document.getElementById("submitBtn");
+    const dashboardBtn = document.getElementById("dashboardBtn");
+    const authBtn = document.getElementById("authBtn");
+
+    // Check login
+    onAuthStateChanged(auth, user => {
+      if(user){
+        userStatus.textContent = `Logged in as ${user.email}`;
+        authBtn.textContent = "Logout";
+        authBtn.style.background = "#ff4d4d";
+      } else {
+        userStatus.textContent = "Not logged in!";
+        authBtn.textContent = "Login/Register";
+        authBtn.style.background = "#ff9900";
+      }
+    });
+
+    // Button actions
+    submitBtn.addEventListener("click", ()=> {
+      window.location.href = "submit.html";
+    });
+    dashboardBtn.addEventListener("click", ()=> {
+      window.location.href = "dashboard.html";
+    });
+
+    authBtn.addEventListener("click", async ()=> {
+      const user = auth.currentUser;
+      if(user){
+        // Logout
+        await signOut(auth);
+        alert("Logged out successfully!");
+        window.location.reload();
+      } else {
+        // Go to login page
+        window.location.href = "login.html";
+      }
+    });
+  </script>
+</body>
+</html>

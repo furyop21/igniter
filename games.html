@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Play Igniter - Game Profile</title>
+
+  <!-- Basic SEO + OG (will be updated dynamically) -->
+  <meta name="description" content="Play Igniter — indie games platform" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Play Igniter — Game" />
+  <meta property="og:description" content="Discover this indie game on Play Igniter" />
+  <meta property="og:image" content="" />
+  <meta property="og:url" content="" />
+
+  <!-- Your main/previous CSS (kept) -->
+  <link rel="stylesheet" href="gamestyle.css">
+
+  <!-- Inline CSS for controls, cookie banner and small UI elements -->
+  <style>
+    /* Basic controls & layout */
+    #gameProfile { max-width: 1100px; margin: 28px auto; padding: 0 16px; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; color: #f2f2f2; }
+    .game-header { display:flex; gap:18px; align-items:flex-start; margin-bottom:18px; }
+    .game-header img.cover { width:320px; height:180px; object-fit:cover; border-radius:10px; background:#0b0b0b; border:1px solid #222; }
+    .game-header .meta { flex:1; }
+    h2.title { margin:0 0 6px; font-size:1.7rem; color:#ffcc00; }
+    .dev { margin:6px 0; color:#cfcfcf; font-weight:600; }
+    .tags { color:#aaa; margin-bottom:8px; }
+    .description { margin:14px 0; color:#ddd; line-height:1.5; white-space:pre-wrap; }
+    .screenshots { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0; }
+    .screenshots img { width:220px; height:120px; object-fit:cover; border-radius:8px; border:1px solid #222; cursor:pointer; }
+
+    /* Actions */
+    .controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+    .btn { padding:10px 14px; border-radius:10px; border: none; cursor:pointer; font-weight:700; background:#ff8c00; color:#0b0b0c; }
+    .btn.secondary { background:#2b59ff; color:white; }
+    .btn.ghost { background:transparent; border:1px solid #444; color:#ddd; }
+    .like-btn { display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:999px; background:#222; color:#fff; border:none; cursor:pointer; }
+    .like-btn.liked { background:#ff3b30; color:#fff; box-shadow:0 6px 18px rgba(255,59,48,.12); transform:translateY(-1px); }
+
+    .counts { margin-left:8px; color:#ddd; font-weight:600; font-size:0.95rem; }
+
+    /* Web player */
+    .web-player { margin-top:12px; border-radius:10px; overflow:hidden; background:#000; border:1px solid #222; }
+    .web-player iframe { width:100%; height:600px; border:0; display:block; }
+
+    /* Cookie banner */
+    #cookieBanner { position:fixed; left:12px; right:12px; bottom:12px; z-index:9999; background:linear-gradient(180deg,#0f1720,#0b0f14); color:#eee; border-radius:12px; box-shadow:0 12px 36px rgba(0,0,0,.6); display:flex; gap:12px; align-items:center; padding:12px 14px; max-width:1200px; margin:0 auto; }
+    #cookieBanner p { margin:0; font-size:0.95rem; color:#ddd; line-height:1.2; }
+    #cookieBanner .actions { margin-left:auto; display:flex; gap:8px; }
+    #cookieBanner .btn-small { padding:8px 10px; border-radius:8px; font-weight:700; cursor:pointer; border:none; }
+    #cookieBanner .btn-accept { background:#22c55e; color:#04270a; }
+    #cookieBanner .btn-reject { background:#374151; color:#fff; }
+
+    /* small helper */
+    .muted { color:#a6a6a6; font-size:0.95rem; }
+    .spinner { display:inline-block; width:16px; height:16px; border:2px solid #333; border-top:2px solid #ff8c00; border-radius:50%; animation:spin 0.9s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* responsive */
+    @media (max-width:800px){
+      .game-header { flex-direction:column; align-items:stretch; }
+      .game-header img.cover { width:100%; height:220px; }
+      .web-player iframe { height:420px; }
+    }
+  </style>
+</head>
+<body>
+   <!-- Header -->
+    <header>
+        <h1>Play Igniter</h1>
+       
+    </header>
+
+    <!-- Navigation -->
+  
+    <nav>
+        <ul>
+            <li><a href="Index.html">Home</a></li>
+            <li><a href="games.html">Games</a></li>
+             <li><a href="about.html" class="active">About</a></li>
+            <li><a href="contact.html" class="active">Contact Us</a></li>
+             <li><a href="fordevelopers.html">For Developers</a></li>
+           
+        </ul>
+    </nav>
+
+  <main id="gameProfile">
+    <!-- loading state -->
+    <div id="loading" style="max-width:1100px;margin:28px auto;text-align:center;color:#ddd;">
+      <div style="font-size:14px;margin-bottom:8px;">Loading game… <span class="spinner"></span></div>
+      <div class="muted">If the game does not load, check the link or contact developer.</div>
+    </div>
+  </main>
+
+  <footer style="margin-top:40px;padding:18px 16px;background:#070708;color:#bdbdbd;text-align:center;">
+    <div style="max-width:1200px;margin:0 auto;">
+      <p style="margin:0;">© 2025 Play Igniter. All Rights Reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Cookie Consent Banner (hidden by default) -->
+  <div id="cookieBanner" style="display:none;">
+    <div style="max-width:70%">
+      <p><strong>We use cookies</strong> to enable likes, track views & downloads and improve your experience. Accept to allow tracking. You can change this later in your browser.</p>
+    </div>
+    <div class="actions">
+      <button class="btn-small btn-reject" id="cookieReject">Reject</button>
+      <button class="btn-small btn-accept" id="cookieAccept">Accept</button>
+    </div>
+  </div>
+
+  <!-- Script: Firebase + page logic -->
+  <script type="module">
+    // --- Firebase imports
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+    import {
+      getFirestore, doc, getDoc, updateDoc, increment
+    } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-functions.js";
+
+    // -------------------------
+    // CONFIG - use your project's config
+    // -------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgFcVor28FHPNAuPFbqrJREMZczbNXuEM",
+      authDomain: "play-igniter.firebaseapp.com",
+      projectId: "play-igniter",
+      storageBucket: "play-igniter.firebasestorage.app",
+      messagingSenderId: "536853973922",
+      appId: "1:536853973922:web:0eae7c74c39807d72fc0fb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const functions = getFunctions(app); // optional fallback
+
+    // -------------------------
+    // Helpers & state
+    // -------------------------
+    const main = document.getElementById("gameProfile");
+    const loading = document.getElementById("loading");
+    const cookieBanner = document.getElementById("cookieBanner");
+    const cookieAcceptBtn = document.getElementById("cookieAccept");
+    const cookieRejectBtn = document.getElementById("cookieReject");
+
+    const params = new URLSearchParams(window.location.search);
+    const gameId = params.get("id");
+    if (!gameId) {
+      main.innerHTML = "<p style='color:#f88;'>Game ID missing in URL. Use ?id=GAMEID</p>";
+      loading.style.display = "none";
+    }
+
+    const localKeys = {
+      consent: "pi_cookie_consent",   // "accepted" / "rejected"
+      viewed: (id) => `pi_viewed_${id}`,
+      liked:  (id) => `pi_liked_${id}`
+    };
+
+    let cookieConsent = localStorage.getItem(localKeys.consent); // may be null
+    let trackingEnabled = (cookieConsent === "accepted");
+
+    // small toast (simple)
+    function toast(msg){
+      console.log("PlayIgniter:", msg);
+      // simple user alert for now
+      try { /* we avoid alert spam */ } catch(e){}
+    }
+
+    // Show cookie banner if user hasn't decided
+    function ensureCookieBanner(){
+      if (!cookieConsent) {
+        cookieBanner.style.display = "flex";
+      } else {
+        cookieBanner.style.display = "none";
+      }
+    }
+    ensureCookieBanner();
+
+    cookieAcceptBtn.addEventListener("click", () => {
+      localStorage.setItem(localKeys.consent, "accepted");
+      cookieConsent = "accepted";
+      trackingEnabled = true;
+      cookieBanner.style.display = "none";
+      // if content already loaded, perform view increment
+      if (window._game && window._gameDocRef) incrementViewOnce();
+    });
+
+    cookieRejectBtn.addEventListener("click", () => {
+      localStorage.setItem(localKeys.consent, "rejected");
+      cookieConsent = "rejected";
+      trackingEnabled = false;
+      cookieBanner.style.display = "none";
+    });
+
+    // -------------------------
+    // Firestore helpers with fallback
+    // Attempts direct update, if permission error occurs it calls a Cloud Function fallback (if available)
+    // -------------------------
+    async function safeIncrementField(docRef, field, delta = 1){
+      try {
+        await updateDoc(docRef, { [field]: increment(delta) });
+        return true;
+      } catch (err) {
+        console.warn("Direct update failed:", err && err.code ? err.code : err.message || err);
+        // attempt Cloud Function fallback if available
+        try {
+          const fn = httpsCallable(functions, "incrementGameCounter");
+          await fn({ gameId, field, delta });
+          return true;
+        } catch (fnErr) {
+          console.warn("Cloud Function fallback failed:", fnErr && fnErr.message ? fnErr.message : fnErr);
+          return false;
+        }
+      }
+    }
+
+    // -------------------------
+    // Load & render game
+    // -------------------------
+    window._game = null;       // loaded data
+    window._gameDocRef = null; // doc ref object
+
+    async function loadGame(){
+      try {
+        if (!gameId) return;
+        const docRef = doc(db, "Games", gameId);
+        window._gameDocRef = docRef;
+
+        const snap = await getDoc(docRef);
+        if (!snap.exists()) {
+          main.innerHTML = "<p style='color:#f88;'>Game not found.</p>";
+          loading.style.display = "none";
+          return;
+        }
+
+        const game = snap.data();
+        window._game = game;
+
+        // some possible alternate field names used across your project
+        const screenshots = game.screenshotURLs || game.screenshots || [];
+        const coverURL = game.coverURL || game.cover || "";
+        const title = game.title || "Untitled";
+        const studio = game.studio || game.studioName || game.developer || "Unknown";
+        const description = game.description || "No description available.";
+        const type = game.type || game.platform || "";
+        const version = game.version || "1.0";
+
+        // counts (safe defaults)
+        const views = (game.views ?? 0);
+        const downloads = (game.downloads ?? 0);
+        const likes = (game.likes ?? 0);
+
+        // render HTML
+        main.innerHTML = `
+          <div class="game-header" role="region" aria-label="Game header">
+            <img class="cover" src="${escapeHtml(coverURL) || 'default.jpg'}" alt="${escapeHtml(title)} cover">
+            <div class="meta">
+              <h2 class="title">${escapeHtml(title)}</h2>
+              <div class="dev">${escapeHtml(studio)}</div>
+              <div class="tags muted">${escapeHtml(type)} • Version ${escapeHtml(version)}</div>
+
+              <div class="controls" id="controlsRow">
+                <button class="btn" id="playBtn" style="display:none;">Play in Browser</button>
+                <a id="downloadWindows" class="btn ghost" style="display:none;" role="button">Download (Windows)</a>
+                <a id="downloadAndroid" class="btn ghost" style="display:none;" role="button">Download (Android)</a>
+                <button class="like-btn" id="likeBtn" aria-pressed="false">
+                  <span id="likeIcon">❤</span>
+                  <span id="likeText">Like</span>
+                  <span class="counts" id="likeCount">${likes}</span>
+                </button>
+
+                <button class="btn secondary" id="shareBtn">Share</button>
+
+                <div style="margin-left:10px;" class="muted">👁️ <span id="viewCount">${views}</span> &nbsp; • &nbsp; ⬇️ <span id="downloadCount">${downloads}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="description">${escapeHtml(description)}</div>
+
+          <div class="screenshots" id="screenshotsRow">
+            ${screenshots.map(url => `<img src="${escapeHtml(url)}" alt="Screenshot" loading="lazy">`).join("")}
+          </div>
+
+          <div id="webPlayerWrap"></div>
+        `;
+
+        // update meta tags for sharing
+        updateMetaTags({ title, description, image: coverURL });
+
+        // wire up buttons & actions
+        setupInteractions(game, { screenshots });
+
+        // after render: increment view (once) if allowed
+        if (trackingEnabled) {
+          incrementViewOnce(); // will check localStorage to avoid double-counting
+        } else {
+          // if user hasn't decided show banner
+          ensureCookieBanner();
+        }
+
+      } catch (err) {
+        console.error("Load game failed:", err);
+        main.innerHTML = "<p style='color:#f88;'>Error loading game. See console.</p>";
+      } finally {
+        loading.style.display = "none";
+      }
+    }
+
+    // sanitize text for insertion into HTML
+    function escapeHtml(s){
+      if (s === null || s === undefined) return "";
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    // update social meta tags (OG)
+    function updateMetaTags({ title, description, image }){
+      try {
+        document.title = `${title} — Play Igniter`;
+        const desc = document.querySelector('meta[name="description"]');
+        if (desc) desc.setAttribute('content', description || 'Play Igniter');
+
+        const ogTitle = document.querySelector('meta[property="og:title"]');
+        if (ogTitle) ogTitle.setAttribute('content', title);
+        const ogDesc = document.querySelector('meta[property="og:description"]');
+        if (ogDesc) ogDesc.setAttribute('content', description || '');
+        const ogImage = document.querySelector('meta[property="og:image"]');
+        if (ogImage && image) ogImage.setAttribute('content', image);
+        const ogUrl = document.querySelector('meta[property="og:url"]');
+        if (ogUrl) ogUrl.setAttribute('content', location.href);
+      } catch(e) { /* noncritical */ }
+    }
+
+    // -------------------------
+    // Interactions wiring
+    // -------------------------
+    function setupInteractions(game, extra = {}){
+      const coverWrap = document.querySelector(".game-header img.cover");
+      const screenshotsRow = document.getElementById("screenshotsRow");
+      const likeBtn = document.getElementById("likeBtn");
+      const likeCountEl = document.getElementById("likeCount");
+      const viewCountEl = document.getElementById("viewCount");
+      const downloadCountEl = document.getElementById("downloadCount");
+      const playBtn = document.getElementById("playBtn");
+      const downloadWindows = document.getElementById("downloadWindows");
+      const downloadAndroid = document.getElementById("downloadAndroid");
+      const shareBtn = document.getElementById("shareBtn");
+
+      // build possible download/play links from different field names
+      const fileURL = game.fileURL || game.file || (game.fileData && game.fileData.fileURL) || null;
+      const exeURL = game.exeURL || (game.fileData && game.fileData.exeURL) || null;
+      const apkURL = game.apkURL || (game.fileData && game.fileData.apkURL) || null;
+      const zipURL = game.zipURL || (game.fileData && game.fileData.zipURL) || null;
+      const playURL = game.playURL || (game.fileData && game.fileData.playURL) || null;
+
+      // show play button if web playable
+      if ((game.type === "web" || playURL) && playURL) {
+        playBtn.style.display = "inline-block";
+        playBtn.onclick = () => openWebPlayer(playURL);
+      }
+
+      // download buttons (if each link exists)
+      if (exeURL) {
+        downloadWindows.style.display = "inline-block";
+        downloadWindows.onclick = (e) => { e.preventDefault(); handleDownload(exeURL); };
+      } else if (fileURL && fileURL.endsWith(".exe")) {
+        downloadWindows.style.display = "inline-block";
+        downloadWindows.onclick = (e) => { e.preventDefault(); handleDownload(fileURL); };
+      }
+
+      if (apkURL) {
+        downloadAndroid.style.display = "inline-block";
+        downloadAndroid.onclick = (e) => { e.preventDefault(); handleDownload(apkURL); };
+      } else if (fileURL && fileURL.endsWith(".apk")) {
+        downloadAndroid.style.display = "inline-block";
+        downloadAndroid.onclick = (e) => { e.preventDefault(); handleDownload(fileURL); };
+      }
+
+      // if zip download available (showed via downloadWindows fallback)
+      if (zipURL && !exeURL && !apkURL) {
+        downloadWindows.style.display = "inline-block";
+        downloadWindows.textContent = "Download (ZIP)";
+        downloadWindows.onclick = (e) => { e.preventDefault(); handleDownload(zipURL); };
+      }
+
+      // show screenshots clickable -> open in new tab (simple lightbox)
+      Array.from(document.querySelectorAll(".screenshots img")).forEach(img => {
+        img.addEventListener("click", () => window.open(img.src, "_blank"));
+      });
+
+      // like button setup (no-login using localStorage)
+      const likedKey = localKeys.liked(gameId);
+      let liked = localStorage.getItem(likedKey) === "true";
+      setLikeUI(liked);
+
+      likeBtn.onclick = async () => {
+        if (!trackingEnabled) {
+          // show cookie banner if user hasn't accepted
+          ensureCookieBanner();
+          return;
+        }
+        // optimistic UI
+        liked = !liked;
+        setLikeUI(liked);
+
+        // update backend
+        const docRef = doc(db, "Games", gameId);
+        const delta = liked ? 1 : -1;
+        const ok = await safeIncrementField(docRef, "likes", delta);
+        if (!ok) {
+          // rollback UI if backend failed
+          liked = !liked;
+          setLikeUI(liked);
+          toast("Unable to update like - permission or network issue.");
+        } else {
+          // persist local flag
+          if (liked) localStorage.setItem(likedKey, "true");
+          else localStorage.removeItem(likedKey);
+          // optionally refresh count from server (not strictly necessary)
+          try {
+            const snap = await getDoc(docRef);
+            const freshLikes = snap.exists() ? (snap.data().likes ?? 0) : (parseInt(likeCountEl.textContent)||0);
+            likeCountEl.textContent = freshLikes;
+          } catch(_){}
+        }
+      };
+
+      function setLikeUI(isLiked){
+        const el = likeBtn;
+        const ic = document.getElementById("likeIcon");
+        const text = document.getElementById("likeText");
+        if (isLiked) {
+          el.classList.add("liked");
+          el.setAttribute("aria-pressed","true");
+          text.textContent = "Liked";
+        } else {
+          el.classList.remove("liked");
+          el.setAttribute("aria-pressed","false");
+          text.textContent = "Like";
+        }
+      }
+
+      // share button
+      shareBtn.onclick = async () => {
+        try {
+          if (navigator.share) {
+            await navigator.share({ title: game.title || "Play Igniter", text: game.description || "", url: location.href });
+          } else {
+            await navigator.clipboard.writeText(location.href);
+            toast("Link copied to clipboard");
+            alert("Link copied to clipboard");
+          }
+        } catch (err) {
+          console.warn("Share failed:", err);
+          try { await navigator.clipboard.writeText(location.href); alert("Link copied"); } catch(_) { alert("Could not copy link"); }
+        }
+      };
+
+      // set initial counters from loaded doc (safe defaults)
+      document.getElementById("viewCount").textContent = (game.views ?? 0);
+      document.getElementById("downloadCount").textContent = (game.downloads ?? 0);
+      document.getElementById("likeCount").textContent = (game.likes ?? 0);
+    }
+
+    // -------------------------
+    // View increment: only once per browser (per cookie consent)
+    // -------------------------
+    async function incrementViewOnce(){
+      if (!gameId || !trackingEnabled) return;
+      const key = localKeys.viewed(gameId);
+      if (localStorage.getItem(key)) {
+        // already counted on this browser
+        return;
+      }
+      const docRef = doc(db, "Games", gameId);
+      const ok = await safeIncrementField(docRef, "views", 1);
+      if (ok) {
+        localStorage.setItem(key, "true");
+        // optimistically update displayed count if present
+        const el = document.getElementById("viewCount");
+        if (el) el.textContent = (parseInt(el.textContent||"0") + 1).toString();
+      } else {
+        console.warn("View increment failed (permission/network).");
+      }
+    }
+
+    // -------------------------
+    // Download handler (increments downloads then opens link)
+    // -------------------------
+    async function handleDownload(url){
+      if (!url) return;
+      if (trackingEnabled) {
+        // fire-and-forget: increment, but don't block the user if slow
+        const docRef = doc(db, "Games", gameId);
+        safeIncrementField(docRef, "downloads", 1).then(ok => {
+          if (ok) {
+            const el = document.getElementById("downloadCount");
+            if (el) el.textContent = (parseInt(el.textContent||"0") + 1).toString();
+          }
+        });
+      }
+      // open file (new tab)
+      window.open(url, "_blank");
+    }
+
+    // -------------------------
+    // Web player insertion
+    // -------------------------
+    function openWebPlayer(playURL){
+      const wrap = document.getElementById("webPlayerWrap");
+      wrap.innerHTML = `
+        <div class="web-player" role="region" aria-label="Game play area">
+          <iframe src="${escapeHtml(playURL)}" allow="autoplay; fullscreen; accelerometer; gyroscope; picture-in-picture"></iframe>
+        </div>
+      `;
+      // mobile friendly: scroll to player
+      setTimeout(()=> { document.querySelector('.web-player').scrollIntoView({ behavior:'smooth' }); }, 120);
+    }
+
+    // -------------------------
+    // Start
+    // -------------------------
+    loadGame();
+
+    // -------------------------
+    // OPTIONAL: convenience - expose some helpers in console
+    // -------------------------
+    window.pi = {
+      gameId,
+      acceptCookies: () => { localStorage.setItem(localKeys.consent,"accepted"); cookieConsent="accepted"; trackingEnabled=true; incrementViewOnce(); },
+      rejectCookies: () => { localStorage.setItem(localKeys.consent,"rejected"); cookieConsent="rejected"; trackingEnabled=false; }
+    };
+
+  </script>
+</body>
+</html>

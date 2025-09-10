@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Play Igniter - Dashboard</title>
+<link rel="stylesheet" href="dashboardstyle.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>Play Igniter</h1>
+  <p>Creator Dashboard</p>
+</header>
+ <!-- Navigation -->
+  <nav>
+    <ul>
+      <li><a href="Index.html">Home</a></li>
+      <li><a href="games.html">Games</a></li>
+      <li><a href="about.html" class="active">About</a></li>
+      <li><a href="contact.html" class="active">Contact Us</a></li>
+      <li><a href="fordevelopers.html">For Developers</a></li>
+    </ul>
+  </nav>
+<main>
+  <!-- User Info -->
+  <div class="user-info">
+    <p id="userEmail">Checking login...</p>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <!-- Profile -->
+  <section class="profile-section">
+    <h3>Profile Info</h3>
+    <p>Email: <span id="profileEmail"></span></p>
+    <p>Studio: <span id="profileStudio">Not set</span></p>
+    <p>Joined: <span id="profileJoined">-</span></p>
+  </section>
+
+  <!-- Stats Cards -->
+  <div class="stats-cards">
+    <div class="stats-card">
+      <h4>Total Submissions</h4>
+      <p id="totalSubs">0</p>
+    </div>
+    <div class="stats-card">
+      <h4>Total Views</h4>
+      <p id="totalViews">0</p>
+    </div>
+    <div class="stats-card">
+      <h4>Total Downloads</h4>
+      <p id="totalDownloads">0</p>
+    </div>
+    <div class="stats-card">
+      <h4>Updates Requested</h4>
+      <p id="totalUpdates">0</p>
+    </div>
+  </div>
+
+  <!-- User Submissions Table -->
+  <h3 class="section-title">My Submissions</h3>
+  <table id="submissionTable">
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Submitted At</th>
+        <th>Published/Edited</th>
+        <th>Views</th>
+        <th>Downloads</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="8" style="text-align:center;">Loading submissions...</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Graph Section -->
+  <section class="graph-section">
+    <h3>Submission Stats</h3>
+    <canvas id="statsChart"></canvas>
+  </section>
+</main>
+
+<footer>&copy; 2025 Play Igniter. All Rights Reserved.</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getFirestore, doc, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAgFcVor28FHPNAuPFbqrJREMZczbNXuEM",
+  authDomain: "play-igniter.firebaseapp.com",
+  projectId: "play-igniter",
+  storageBucket: "play-igniter.firebasestorage.app",
+  messagingSenderId: "536853973922",
+  appId: "1:536853973922:web:0eae7c74c39807d72fc0fb"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const userEmail = document.getElementById("userEmail");
+const logoutBtn = document.getElementById("logoutBtn");
+const submissionTable = document.getElementById("submissionTable").getElementsByTagName('tbody')[0];
+const profileEmail = document.getElementById("profileEmail");
+const profileStudio = document.getElementById("profileStudio");
+const profileJoined = document.getElementById("profileJoined");
+const totalSubs = document.getElementById("totalSubs");
+const totalViews = document.getElementById("totalViews");
+const totalDownloads = document.getElementById("totalDownloads");
+const totalUpdates = document.getElementById("totalUpdates");
+
+let chart;
+
+logoutBtn.addEventListener("click", () => {
+  signOut(auth).then(()=> window.location.href="login.html");
+});
+
+onAuthStateChanged(auth, async (user) => {
+  if(user){
+    userEmail.textContent = `Logged in as ${user.email}`;
+    profileEmail.textContent = user.email;
+
+    // Get user profile
+    const userDocRef = doc(db, "Users", user.uid);
+    const submissionsCol = collection(userDocRef, "Submissions");
+    const q = query(submissionsCol, orderBy("submittedAt","desc"));
+    const snapshot = await getDocs(q);
+
+    // Set stats
+    let subsCount = 0, viewsCount = 0, downloadsCount = 0, updatesCount = 0;
+    let chartLabels = [], chartViews = [], chartDownloads = [];
+
+    submissionTable.innerHTML = "";
+
+    if(snapshot.empty){
+      submissionTable.innerHTML = '<tr><td colspan="8" style="text-align:center;">No submissions yet</td></tr>';
+    } else {
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        subsCount++;
+        viewsCount += data.views || 0;
+        downloadsCount += data.downloads || 0;
+        if(data.updateRequest) updatesCount++;
+
+        chartLabels.push(data.title);
+        chartViews.push(data.views || 0);
+        chartDownloads.push(data.downloads || 0);
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td data-label="Title">${data.title}</td>
+          <td data-label="Type">${data.type}</td>
+          <td data-label="Description">${data.description}</td>
+          <td data-label="Submitted At">${new Date(data.submittedAt).toLocaleString()}</td>
+          <td data-label="Published/Edited">${data.publishedAt ? new Date(data.publishedAt).toLocaleString() : '-'}</td>
+          <td data-label="Views">${data.views || 0}</td>
+          <td data-label="Downloads">${data.downloads || 0}</td>
+          <td data-label="Action"><button class="btn-update" onclick="requestUpdate('${docSnap.id}')">Request Update</button></td>
+        `;
+        submissionTable.appendChild(tr);
+      });
+    }
+
+    totalSubs.textContent = subsCount;
+    totalViews.textContent = viewsCount;
+    totalDownloads.textContent = downloadsCount;
+    totalUpdates.textContent = updatesCount;
+
+    // Chart.js
+    const ctx = document.getElementById('statsChart').getContext('2d');
+    if(chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: chartLabels,
+        datasets: [
+          { label: 'Views', data: chartViews, backgroundColor: '#ff8c00' },
+          { label: 'Downloads', data: chartDownloads, backgroundColor: '#ff003c' }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top', labels: { color:'#fff' } } },
+        scales: {
+          x: { ticks: { color: '#fff' }, grid: { color:'#333' } },
+          y: { ticks: { color: '#fff' }, grid: { color:'#333' } }
+        }
+      }
+    });
+
+  } else {
+    userEmail.textContent = "Not logged in! Redirecting...";
+    setTimeout(()=> window.location.href="login.html",2000);
+  }
+});
+
+// Request Update Function
+window.requestUpdate = async (docId) => {
+  const notes = prompt("Enter your update request notes:");
+  if(!notes) return;
+  const user = auth.currentUser;
+  const docRef = doc(db, "Users", user.uid, "Submissions", docId);
+  await updateDoc(docRef, { updateRequest: notes, updateRequestedAt: new Date().toISOString() });
+  alert("Update request sent!");
+}
+</script>
+</body>
+</html>

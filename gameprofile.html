@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Game Profile</title>
+<style>
+  /* --- Basic Reset & Layout --- */
+  body { margin:0; font-family: Arial, sans-serif; background:#111; color:#eee; }
+  a { color:#ff8c00; text-decoration:none; }
+  a:hover { text-decoration: underline; }
+  .hidden { display:none; }
+  .page-wrap { display:flex; flex-wrap:wrap; padding:20px; gap:20px; }
+  header, footer { padding:10px 20px; background:#222; color:#eee; }
+  header .brand { display:flex; align-items:center; gap:10px; }
+  header nav ul { list-style:none; padding:0; display:flex; gap:15px; }
+  header nav ul li a.active { color:#ff8c00; font-weight:bold; }
+  .left-col, .right-col { flex:1 1 400px; }
+  .cover-wrap { position:relative; }
+  .cover-img { width:100%; max-height:450px; object-fit:cover; border-radius:8px; }
+  .cover-badges { position:absolute; top:10px; left:10px; display:flex; gap:5px; }
+  .badge { padding:3px 6px; font-size:12px; border-radius:4px; background:#ff8c00; color:#111; }
+  .badge-muted { background:#555; }
+  .screenshot-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; margin-top:10px; }
+  .shot { width:100%; height:80px; object-fit:cover; border-radius:4px; cursor:pointer; transition:transform 0.2s; }
+  .shot:hover { transform:scale(1.05); }
+  .img-modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:flex; align-items:center; justify-content:center; z-index:999; }
+  .img-modal img { max-width:90%; max-height:90%; border-radius:8px; }
+  .img-close, .img-nav { position:absolute; top:20px; background:#222; color:#fff; border:none; padding:10px; cursor:pointer; font-size:20px; border-radius:4px; }
+  .img-close { right:20px; }
+  .img-nav { top:50%; transform:translateY(-50%); }
+  #imgPrev { left:20px; }
+  #imgNext { right:60px; }
+  .primary-btn, .primary-outline, .download-btn, .ghost-link, .ghost-btn { display:inline-block; padding:10px 15px; margin:5px 0; border-radius:4px; cursor:pointer; }
+  .primary-btn { background:#ff8c00; color:#111; border:none; }
+  .primary-outline { border:1px solid #ff8c00; color:#ff8c00; background:transparent; }
+  .download-btn { background:#333; color:#ff8c00; border:none; }
+  .ghost-link, .ghost-btn { background:transparent; border:none; color:#ff8c00; }
+  iframe { width:100%; height:450px; border:none; border-radius:8px; margin-top:10px; }
+  .meta-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin:10px 0; }
+  @media(max-width:800px){.page-wrap{flex-direction:column;}}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="index.html">
+      <div class="logo" aria-hidden="true"></div>
+      <div class="brand-text">
+        <div class="site-title">Play Igniter</div>
+        <div class="site-sub">Discover Unique Indie Games</div>
+      </div>
+    </a>
+    <nav class="main-nav" aria-label="Main">
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="games.html" class="active">Games</a></li>
+        <li><a href="fordevelopers.html">For Developers</a></li>
+        <li><a href="about.html">About</a></li>
+      </ul>
+    </nav>
+    <div class="nav-right">
+      <a id="logoutNavLink" class="logout-nav hidden" href="#" role="button">Logout</a>
+    </div>
+  </div>
+</header>
+
+<main id="main" class="page-wrap">
+  <div id="loader" class="loader">Loading game…</div>
+  <div id="notFound" class="message hidden">
+    <h2>Game not found</h2>
+    <p>Either the game doesn't exist or the ID is invalid.</p>
+    <a href="games.html" class="btn">Back to games</a>
+  </div>
+
+  <article id="gamePage" class="game-page hidden" aria-live="polite">
+    <section class="left-col">
+      <div class="play-area" id="playArea">
+        <div id="coverWrap" class="cover-wrap">
+          <img id="coverImg" alt="Game cover" class="cover-img" src="" />
+          <div id="coverBadges" class="cover-badges"></div>
+        </div>
+        <div id="iframeWrap" class="iframe-wrap hidden">
+          <div class="iframe-toolbar">
+            <button id="fullscreenBtn" class="ghost-btn" title="Fullscreen">⤢ Fullscreen</button>
+            <a id="openNewTab" class="ghost-link" target="_blank" rel="noopener">Open in new tab</a>
+          </div>
+          <div class="iframe-container" id="iframeContainer">
+            <iframe id="gameIframe" sandbox="allow-forms allow-scripts"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="screenshots">
+        <h3>Screenshots</h3>
+        <div id="screenshotGrid" class="screenshot-grid"></div>
+      </div>
+
+      <div id="imgModal" class="img-modal hidden" role="dialog" aria-modal="true">
+        <button id="imgClose" class="img-close" aria-label="Close">✕</button>
+        <button id="imgPrev" class="img-nav">‹</button>
+        <img id="imgModalImg" src="" alt="Screenshot large">
+        <button id="imgNext" class="img-nav">›</button>
+      </div>
+    </section>
+
+    <aside class="right-col">
+      <h1 id="title" class="game-title">Game Title</h1>
+      <div class="meta-row">
+        <div class="studio" id="studio">Studio Name</div>
+        <div class="version" id="version">v1.0</div>
+      </div>
+
+      <div class="meta-grid">
+        <div><strong>Developers</strong><div id="developers"></div></div>
+        <div><strong>Genre</strong><div id="genre"></div></div>
+        <div><strong>Release</strong><div id="releaseDate"></div></div>
+        <div><strong>Views</strong><div id="views">0</div></div>
+        <div><strong>Downloads</strong><div id="downloads">0</div></div>
+      </div>
+
+      <div class="description" id="description">Description here.</div>
+
+      <div class="action-area">
+        <div id="webActions" class="actions hidden">
+          <button id="playBtn" class="primary-btn">Play in site</button>
+          <a id="webNewTab" class="primary-outline" target="_blank" rel="noopener">Open in new tab</a>
+        </div>
+        <div id="downloadActions" class="actions hidden">
+          <a id="winDl" class="download-btn hidden" href="#" role="button" rel="noopener" download>Download for Windows</a>
+          <a id="apkDl" class="download-btn hidden" href="#" role="button" rel="noopener" download>Download APK</a>
+        </div>
+      </div>
+
+      <div class="file-info" id="fileInfo">
+        <h4>Files & Info</h4>
+        <ul id="fileList"></ul>
+      </div>
+
+      <div class="more-actions">
+        <a id="reportBtn" class="ghost-link">Report</a>
+        <a id="backToGames" class="ghost-link" href="games.html">Back to games</a>
+      </div>
+
+    </aside>
+  </article>
+</main>
+
+<footer class="site-footer">
+  © Play Igniter
+</footer>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, doc, getDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getStorage, ref as storageRef, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js";
+
+// ---------- Firebase config ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyAgFcVor28FHPNAuPFbqrJREMZczbNXuEM",
+  authDomain: "play-igniter.firebaseapp.com",
+  projectId: "play-igniter",
+  storageBucket: "play-igniter.appspot.com",
+  messagingSenderId: "536853973922",
+  appId: "1:536853973922:web:0eae7c74c39807d72fc0fb"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
+const auth = getAuth(app);
+
+// UI refs
+const loader = document.getElementById('loader');
+const gamePage = document.getElementById('gamePage');
+const notFound = document.getElementById('notFound');
+
+const titleEl = document.getElementById('title');
+const studioEl = document.getElementById('studio');
+const devEl = document.getElementById('developers');
+const genreEl = document.getElementById('genre');
+const descEl = document.getElementById('description');
+const versionEl = document.getElementById('version');
+const releaseEl = document.getElementById('releaseDate');
+const viewsEl = document.getElementById('views');
+const downloadsEl = document.getElementById('downloads');
+const coverImg = document.getElementById('coverImg');
+const coverBadges = document.getElementById('coverBadges');
+
+const screenshotGrid = document.getElementById('screenshotGrid');
+
+const iframeWrap = document.getElementById('iframeWrap');
+const iframeEl = document.getElementById('gameIframe');
+const iframeContainer = document.getElementById('iframeContainer');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const openNewTab = document.getElementById('openNewTab');
+
+const webActions = document.getElementById('webActions');
+const playBtn = document.getElementById('playBtn');
+const webNewTab = document.getElementById('webNewTab');
+
+const downloadActions = document.getElementById('downloadActions');
+const winDl = document.getElementById('winDl');
+const apkDl = document.getElementById('apkDl');
+
+const fileList = document.getElementById('fileList');
+
+const logoutNavLink = document.getElementById('logoutNavLink');
+
+const imgModal = document.getElementById('imgModal');
+const imgModalImg = document.getElementById('imgModalImg');
+const imgClose = document.getElementById('imgClose');
+const imgPrev = document.getElementById('imgPrev');
+const imgNext = document.getElementById('imgNext');
+
+let screenshots = [];
+let currentScreenshotIndex = 0;
+
+// Read game ID from URL
+const urlParams = new URLSearchParams(window.location.search);
+const gameId = urlParams.get('id');
+if (!gameId) {
+  loader.classList.add('hidden');
+  notFound.classList.remove('hidden');
+} else {
+  loadGame(gameId);
+}
+
+// Auth state for logout
+onAuthStateChanged(auth, user => {
+  if (user) {
+    logoutNavLink.classList.remove('hidden');
+    logoutNavLink.onclick = async e => {
+      e.preventDefault();
+      await signOut(auth);
+      window.location.href = "index.html";
+    };
+  } else {
+    logoutNavLink.classList.add('hidden');
+  }
+});
+
+// Resolve URL / Storage Path
+async function resolveURL(path) {
+  if (!path) return null;
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) return path;
+  try {
+    const ref = storageRef(storage, path.replace(/^\/+/, ''));
+    return await getDownloadURL(ref);
+  } catch(e) {
+    console.warn('resolveURL failed', e);
+    return null;
+  }
+}
+
+// Load Game
+async function loadGame(id) {
+  loader.classList.remove('hidden');
+  try {
+    const docRef = doc(db, 'Submission', id);
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) throw 'Game not found';
+    const game = snap.data();
+
+    // Basic info
+    titleEl.textContent = game.title || 'Untitled';
+    studioEl.textContent = game.studio || '—';
+    devEl.textContent = Array.isArray(game.developers) ? game.developers.join(', ') : (game.developers || '—');
+    genreEl.textContent = game.genre || '—';
+    descEl.textContent = game.description || 'No description provided.';
+    versionEl.textContent = game.version ? `v${game.version}` : (game.fileData?.version ? `v${game.fileData.version}` : '');
+    releaseEl.textContent = game.submittedAt?.toDate ? game.submittedAt.toDate().toLocaleDateString() :
+                            game.releaseDate ? new Date(game.releaseDate).toLocaleDateString() : '—';
+    viewsEl.textContent = game.views || 0;
+    downloadsEl.textContent = game.downloads || 0;
+
+    // Cover
+    const coverURL = await resolveURL(game.coverURL || game.cover) || '';
+    coverImg.src = coverURL || 'data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450"><rect width="100%" height="100%" fill="%23111"/><text x="50%" y="50%" fill="%23fff" font-size="22" font-family="Arial" dominant-baseline="middle" text-anchor="middle">No Cover</text></svg>';
+
+    // Screenshots
+    const ssCandidates = game.screenshotURLs || game.screenshots || [];
+    screenshots = await Promise.all(ssCandidates.map(s => resolveURL(s) || s));
+    renderScreenshots();
+
+    // File info
+    const files = game.fileData || {};
+    fileList.innerHTML = '';
+    const info = [];
+    if(files.type) info.push(`Type: ${files.type}`);
+    if(files.platform) info.push(`Platform: ${files.platform}`);
+    if(files.size) info.push(`Size: ${files.size}`);
+    if(files.note) info.push(files.note);
+    fileList.innerHTML = info.length ? info.map(i=>`<li>${i}</li>`).join('') : `<li>Files available: ${files.type||'—'}</li>`;
+
+    // Resolve files
+    const resolved = {
+      web: files.fileURL ? await resolveURL(files.fileURL) : files.webURL || null,
+      exe: files.exeURL ? await resolveURL(files.exeURL) : null,
+      apk: files.apkURL ? await resolveURL(files.apkURL) : null
+    };
+
+    // Show web actions
+    if (files.type==='web' || resolved.web) {
+      webActions.classList.remove('hidden');
+      webNewTab.href = resolved.web;
+      openNewTab.href = resolved.web;
+
+      playBtn.onclick = () => {
+        if(!iframeEl.src) iframeEl.src = resolved.web;
+        coverImg.classList.add('hidden');
+        iframeWrap.classList.remove('hidden');
+        iframeContainer.scrollIntoView({behavior:'smooth', block:'center'});
+      };
+    }
+
+    // Downloads
+    downloadActions.classList.add(resolved.exe || resolved.apk ? 'visible' : 'hidden');
+    if(resolved.exe) {
+      winDl.classList.remove('hidden');
+      winDl.href = resolved.exe;
+      winDl.onclick = e => incrementDownload(id);
+    } else winDl.classList.add('hidden');
+
+    if(resolved.apk) {
+      apkDl.classList.remove('hidden');
+      apkDl.href = resolved.apk;
+      apkDl.onclick = e => incrementDownload(id);
+    } else apkDl.classList.add('hidden');
+
+    // Badges
+    coverBadges.innerHTML = '';
+    const typeBadge = files.type ? `<span class="badge">${files.type.toUpperCase()}</span>` : '';
+    const statusBadge = game.status ? `<span class="badge badge-muted">${game

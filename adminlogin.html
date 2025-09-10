@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Play Igniter</title>
+  <link rel="stylesheet" href="adminlogin.css">
+</head>
+<body>
+  <div class="login-container">
+    <h1>Admin Login</h1>
+    <form id="loginForm">
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <p id="errorMsg"></p>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAgFcVor28FHPNAuPFbqrJREMZczbNXuEM",
+      authDomain: "play-igniter.firebaseapp.com",
+      projectId: "play-igniter",
+      storageBucket: "play-igniter.firebasestorage.app",
+      messagingSenderId: "536853973922",
+      appId: "1:536853973922:web:0eae7c74c39807d72fc0fb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const loginForm = document.getElementById("loginForm");
+    const errorMsg = document.getElementById("errorMsg");
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = "";
+      const emailInput = document.getElementById("email").value.trim().toLowerCase();
+      const password = document.getElementById("password").value;
+
+      try {
+        // Firebase Auth login
+        const userCredential = await signInWithEmailAndPassword(auth, emailInput, password);
+        const user = userCredential.user;
+        const normalizedEmail = user.email.trim().toLowerCase();
+
+        // Check Firestore admins collection
+        const q = query(collection(db, "Admins"), where("email", "==", normalizedEmail));
+        const querySnapshot = await getDocs(q);
+
+        if (!querySnapshot.empty) {
+          // Admin found → redirect
+          window.location.href = "admin.html";
+        } else {
+          errorMsg.textContent = "Access Denied: You are not an admin.";
+        }
+
+      } catch (err) {
+        // Firebase Auth errors
+        switch(err.code) {
+          case "auth/user-not-found":
+            errorMsg.textContent = "No account found with this email.";
+            break;
+          case "auth/wrong-password":
+            errorMsg.textContent = "Incorrect password.";
+            break;
+          case "auth/invalid-email":
+            errorMsg.textContent = "Invalid email address.";
+            break;
+          default:
+            errorMsg.textContent = "Login failed: " + err.message;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

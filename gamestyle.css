@@ -1,0 +1,206 @@
+/* General */
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0d0d0d;
+    color: white;
+}
+
+main {
+    flex: 1; /* pushes footer down */
+}
+
+/* Header */
+header {
+    background: linear-gradient(90deg, #ff003c, #ff8c00, #ff003c);
+    background-size: 300% 300%;
+    animation: headerGlow 6s ease infinite;
+    text-align: center;
+    padding: 1.5rem 0 0.5rem;
+    box-shadow: 0 0 20px rgba(255, 0, 60, 0.4);
+}
+header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 0 8px #ff4b2b, 0 0 16px #ff416c;
+}
+header p {
+    margin: 0.5rem 0 0;
+    font-size: 1.1rem;
+    color: #ffd6e0;
+    text-shadow: 0 0 4px #ff4b2b;
+}
+
+/* Header Animation */
+@keyframes headerGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Navigation */
+nav {
+    background: rgba(0,0,0,0.3);
+    padding: 0.5rem 0;
+    box-shadow: 0 2px 10px rgba(255, 0, 60, 0.3);
+}
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+nav ul li {
+    margin: 0.5rem 1rem;
+}
+nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    position: relative;
+    padding: 0.3rem 0.5rem;
+    transition: color 0.3s;
+}
+nav ul li a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -3px;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, #ff003c, #ff8c00, #ff003c);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.3s ease-out;
+}
+nav ul li a:hover {
+    color: #ff8c00;
+}
+nav ul li a:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+}
+
+/* Search + Filter Section */
+#search-filter {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #141414;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+#searchBar, #typeFilter {
+    padding: 0.6rem 1rem;
+    border-radius: 5px;
+    border: none;
+    font-size: 1rem;
+}
+#searchBar {
+    width: 250px;
+    background: #222;
+    color: white;
+}
+#typeFilter {
+    background: #ff416c;
+    color: white;
+    cursor: pointer;
+}
+
+/* Games Grid */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    padding: 1.5rem;
+}
+.game-card {
+    background: #1a1a1a;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(255, 0, 60, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.game-card img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+}
+.game-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 25px rgba(255, 0, 60, 0.6);
+}
+.game-info {
+    padding: 0.8rem;
+    text-align: center;
+}
+.game-info h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* Tags */
+.tag {
+  display: inline-block;
+  padding: 4px 10px;
+  margin: 4px 4px 0 0;
+  font-size: 0.8rem;
+  font-weight: bold;
+  border-radius: 12px;
+  text-transform: capitalize;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.tag:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
+.tag.web {
+  background: linear-gradient(135deg, #007bff, #00c3ff);
+  color: #fff;
+}
+.tag.download {
+  background: linear-gradient(135deg, #28a745, #6ee75f);
+  color: #fff;
+}
+.tag.pc {
+  background: linear-gradient(135deg, #444, #6c757d);
+  color: #fff;
+}
+.tag.android {
+  background: linear-gradient(135deg, #3ddc84, #2ecc71);
+  color: #000;
+}
+.tag.ios {
+  background: linear-gradient(135deg, #999, #ddd);
+  color: #000;
+}
+.tag.console {
+  background: linear-gradient(135deg, #ff4500, #ff7300);
+  color: #fff;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 1rem;
+    background: #1a1a1a;
+    color: #aaa;
+}
